@@ -130,6 +130,19 @@ found:
   return p;
 }
 
+//统计进程数量
+uint64 calProc(){
+  struct proc *p;
+  int cnt=0;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+    if(p->state != UNUSED) {
+      ++cnt;
+    }
+  }
+  return cnt;
+}
+
 // free a proc structure and the data hanging from it,
 // including user pages.
 // p->lock must be held.
@@ -282,6 +295,8 @@ fork(void)
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
+  //保存trace参数到子进程中
+  np->TRACEMASK=p->TRACEMASK;
 
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)

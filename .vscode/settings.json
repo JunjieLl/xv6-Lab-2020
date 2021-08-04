@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.cpp": "cpp",
+        "algorithm": "c",
+        "deque": "c",
+        "memory_resource": "c",
+        "functional": "c",
+        "iterator": "c",
+        "locale": "c"
+    }
+}
