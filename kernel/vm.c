@@ -461,8 +461,5 @@ void vmprint(pagetable_t pagetable,uint64 depth){
         vmprint((pagetable_t)child,depth+1);
       }
     } 
-    // else if(pte & PTE_V){
-    //   panic("freewalk: leaf");
-    // }
   }
 }
