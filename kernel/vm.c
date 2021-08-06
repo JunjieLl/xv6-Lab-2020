@@ -412,6 +412,34 @@ err:
   return -1;
 }
 
+void u2kvmcopy(pagetable_t pagetable, pagetable_t kpagetable, uint64 oldsz, uint64 newsz)
+{
+  //参数检验
+  if (oldsz > newsz)
+  {
+    return;
+  }
+  pte_t *ptefrom, *pteto;
+  uint64 pa, i;
+  uint flags;
+
+  oldsz = PGROUNDUP(oldsz);
+  for (i = oldsz; i < newsz; i += PGSIZE)
+  {
+    if ((ptefrom = walk(pagetable, i, 0)) == 0)
+      panic("uvmcopyforkpagetable: pte should exist");
+    //在kpagetable中分配PTE
+    if ((pteto = walk(kpagetable, i, 1)) == 0)
+      panic("uvmcopyforkpagetable: walk fails");
+    pa = PTE2PA(*ptefrom);
+    flags = PTE_FLAGS(*ptefrom);
+    //清除flag的标志位PTE_U，否则进入内核时无法访问
+    flags &= ~PTE_U;
+    //组合成对应pte的内容
+    *pteto = PA2PTE(pa) | flags;
+  }
+}
+
 // mark a PTE invalid for user access.
 // used by exec for the user stack guard page.
 void uvmclear(pagetable_t pagetable, uint64 va)
@@ -449,22 +477,12 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
   return 0;
 }
 
-static struct stats {
-  int ncopyin;
-  int ncopyinstr;
-} stats;
 // Copy from user to kernel.
 // Copy len bytes to dst from virtual address srcva in a given page table.
 // Return 0 on success, -1 on error.
 int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
-  struct proc *p = myproc();
-
-  if (srcva >= p->sz || srcva+len >= p->sz || srcva+len < srcva)
-    return -1;
-  memmove((void *) dst, (void *)srcva, len);
-  stats.ncopyin++;   // XXX lock
-  return 0;
+  return copyin_new(pagetable, dst, srcva, len);
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -473,16 +491,7 @@ int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 // Return 0 on success, -1 on error.
 int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
-  struct proc *p = myproc();
-  char *s = (char *) srcva;
-  
-  stats.ncopyinstr++;   // XXX lock
-  for(int i = 0; i < max && srcva + i < p->sz; i++){
-    dst[i] = s[i];
-    if(s[i] == '\0')
-      return 0;
-  }
-  return -1;
+  return copyinstr_new(pagetable, dst, srcva, max);
 }
 
 void vmprint(pagetable_t pagetable, uint64 depth)

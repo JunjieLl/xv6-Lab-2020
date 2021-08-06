@@ -287,6 +287,7 @@ void userinit(void)
 
   p->state = RUNNABLE;
 
+  u2kvmcopy(p->pagetable,p->kpagetable,0,p->sz);
   release(&p->lock);
 }
 
@@ -300,14 +301,21 @@ int growproc(int n)
   sz = p->sz;
   if (n > 0)
   {
+    //检查是否查过内核内存最低界限PLIC
+    if(PGROUNDUP(sz+n)>=PLIC){
+      return -1;
+    }
     if ((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0)
     {
       return -1;
     }
+    //将进程页表复制到进程的内核页表
+    u2kvmcopy(p->pagetable,p->kpagetable,sz-n,sz);
   }
   else if (n < 0)
   {
     sz = uvmdealloc(p->pagetable, sz, sz + n);
+    u2kvmcopy(p->pagetable,p->kpagetable,sz+n,sz);
   }
   p->sz = sz;
   return 0;
@@ -327,7 +335,7 @@ int fork(void)
     return -1;
   }
 
-  // Copy user memory from parent to child.
+  // Copy user memory from parent to child.//添加用户页表映射
   if (uvmcopy(p->pagetable, np->pagetable, p->sz) < 0)
   {
     freeproc(np);
@@ -355,7 +363,8 @@ int fork(void)
   pid = np->pid;
 
   np->state = RUNNABLE;
-
+  //将进程页表复制到进程的内核页表
+  u2kvmcopy(np->pagetable,np->kpagetable,0,np->sz);
   release(&np->lock);
 
   return pid;

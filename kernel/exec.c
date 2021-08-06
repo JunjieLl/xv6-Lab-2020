@@ -121,10 +121,8 @@ exec(char *path, char **argv)
     printf("page table %p\n",p->pagetable);
     vmprint(p->pagetable,1);
     };
-  // printf("pid: %d\n",p->pid);
-  // printf("page table %p\n",p->pagetable);
-  // vmprint(p->pagetable,1);
-
+  //将进程页表复制到进程的内核页表
+  u2kvmcopy(p->pagetable,p->kpagetable,0,p->sz);
   
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
