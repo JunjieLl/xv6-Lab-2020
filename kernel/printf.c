@@ -122,6 +122,9 @@ panic(char *s)
   printf(s);
   printf("\n");
   panicked = 1; // freeze uart output from other CPUs
+  //添加backtrace
+  backtrace();
+
   for(;;)
     ;
 }
@@ -131,4 +134,18 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+
+void backtrace(void){
+  //读出当前执行函数的framepointer
+  uint64 fp=r_fp(),cur_fp;
+  //获取栈的上、下界
+  uint64 high=PGROUNDUP(fp);
+  
+  printf("backtrace:\n");
+  cur_fp=fp;
+  while(cur_fp<high){
+    printf("%p\n",*(uint64*)(cur_fp-8));//内核直接映射
+    cur_fp=*(uint64*)(cur_fp-16);
+  }
 }
