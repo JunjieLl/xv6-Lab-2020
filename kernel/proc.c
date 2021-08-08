@@ -120,7 +120,7 @@ found:
     release(&p->lock);
     return 0;
   }
-//初始化
+  //初始化
   p->curticks=0;
   p->ticks=0;
   p->handler=0;

@@ -98,8 +98,12 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-
+//恢复现场
 uint64 sys_sigreturn(){
+  struct proc* p=myproc();
+  //恢复现场
+  memmove(p->trapframe,&(p->resume),sizeof(struct trapframe));
+  p->curticks=0;//清零计时器
   return 0;
 }
 

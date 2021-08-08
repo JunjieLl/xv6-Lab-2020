@@ -108,4 +108,6 @@ struct proc {
   uint64 handler;
   //cur ticks
   int curticks;
+  //保存当前上下文
+  struct trapframe resume;
 };
