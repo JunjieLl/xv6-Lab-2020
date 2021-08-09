@@ -46,18 +46,19 @@ sys_sbrk(void)
 
   if (argint(0, &n) < 0)
     return -1;
-  addr = myproc()->sz;
-  // if(growproc(n) < 0)
-  //   return -1;
   struct proc *p = myproc();
+  addr = p->sz;
+
+  uint64 newsz = addr + n;
+  if (newsz >= MAXVA)
+  { //超出最大虚拟地址
+    return addr;
+  }
   if (n < 0)
   {
-    p->sz = uvmdealloc(p->pagetable, p->sz, p->sz + n);
+    p->sz = uvmdealloc(p->pagetable, addr, addr + n);
   }
-  else
-  {
-    myproc()->sz = addr + n;
-  }
+  p->sz = newsz;
   return addr;
 }
 

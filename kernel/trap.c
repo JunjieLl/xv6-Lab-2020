@@ -71,21 +71,31 @@ void usertrap(void)
   else
   {
     uint64 cause = r_scause();
-    uint64 vaddr = PGROUNDDOWN(r_stval());
-
-    if (13 == cause || 15 == cause)
+    uint64 va = r_stval();
+    if (cause == 13 || cause == 15)
     {
-
-      char *mem = kalloc();
-      if (mem == 0)
+      if (va >= p->sz || va < p->trapframe->sp)
       {
-        panic("usertrap: kalloc");
+        p->killed = 1;
       }
-      memset(mem, 0, PGSIZE);
-      if (mappages(p->pagetable, vaddr, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0)
+      else
       {
-        kfree(mem);
-        panic("usertrap:mappages");
+        uint64 down = PGROUNDDOWN(va);
+        char *mem = kalloc();
+        if (mem == 0)
+        {
+          p->killed = 1;
+        }
+        else
+        {
+          memset(mem, 0, PGSIZE);
+          //映射
+          if (mappages(p->pagetable, down, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0)
+          {
+            kfree(mem);
+            p->killed = 1;
+          }
+        }
       }
     }
     else
