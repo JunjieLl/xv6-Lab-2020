@@ -8,7 +8,7 @@
 #include "spinlock.h"
 #include "riscv.h"
 #include "defs.h"
-
+//引用数组
 int refcount[PHYSTOP/PGSIZE];
 
 void freerange(void *pa_start, void *pa_end);

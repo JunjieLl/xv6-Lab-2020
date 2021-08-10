@@ -34,7 +34,7 @@ int cowfault(pagetable_t pagetable,uint64 va){
   if(pte==0){
     return -1;
   }
-
+  //检测地址的合法性
   if((*pte&PTE_U)==0||(*pte&PTE_V)==0){
     return -1;
   }
@@ -49,12 +49,10 @@ int cowfault(pagetable_t pagetable,uint64 va){
   }
 
   memmove((void *)pa2,(void*)pa1,PGSIZE);
-
+  //释放内存，可能只是减少引用
   kfree((void*)pa1);
 
   *pte=PA2PTE(pa2)|PTE_V|PTE_U|PTE_R|PTE_W|PTE_X;
-
-  //kfree((void*)pa1);
 
   return 0;
 }
