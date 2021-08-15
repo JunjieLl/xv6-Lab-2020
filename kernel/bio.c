@@ -93,7 +93,22 @@ bget(uint dev, uint blockno)
     }
   }
 
-  for (int j = hash(blockno + 1); j != index; j=(j+1)%NBUCKET)
+  for (b = bcache.head[index].next; b != &bcache.head[index]; b = b->next)
+  {
+    if (0 == b->refcnt)
+    {
+      b->dev = dev;
+      b->blockno = blockno;
+      b->valid = 0;
+      b->refcnt = 1;
+      //不需要移动
+      release(&bcache.lock[index]);
+      acquiresleep(&b->lock);
+      return b;
+    }
+  }
+
+  for (int j = hash(blockno + 1); j != index; j = (j + 1) % NBUCKET)
   {
     acquire(&bcache.lock[j]);
     for (b = bcache.head[j].next; b != &bcache.head[j]; b = b->next)
