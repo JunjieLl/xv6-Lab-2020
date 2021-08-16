@@ -409,7 +409,7 @@ bmap(struct inode *ip, uint bn)
     return addr;
   }
   bn -= NINDIRECT;
-
+  //二级索引的映射
   if (bn < NININDIRECT)
   {
     if ((addr = ip->addrs[NDIRECT + 1]) == 0)
